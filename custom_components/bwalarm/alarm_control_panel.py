@@ -37,6 +37,7 @@ import time
 import uuid
 
 from collections import OrderedDict
+from aiohttp import web
 
 from homeassistant.const         import (
     # SERVICES
@@ -58,13 +59,14 @@ from homeassistant.components.alarm_control_panel         import (
     ALARM_SERVICE_SCHEMA
     )
 
-from operator                    import attrgetter
-from homeassistant.core          import callback
-from homeassistant.util.dt       import utcnow                       as now
-from homeassistant.loader        import bind_hass
-from homeassistant.helpers.event import async_track_point_in_time
-from homeassistant.helpers.event import async_track_state_change
-from homeassistant.util          import sanitize_filename
+from operator                      import attrgetter
+from homeassistant.core            import callback
+from homeassistant.components.http import HomeAssistantView
+from homeassistant.util.dt         import utcnow                       as now
+from homeassistant.loader          import bind_hass
+from homeassistant.helpers.event   import async_track_point_in_time
+from homeassistant.helpers.event   import async_track_state_change
+from homeassistant.util            import sanitize_filename
 
 import voluptuous                                                    as vol
 import homeassistant.components.alarm_control_panel                  as alarm
@@ -361,11 +363,11 @@ def str2bool(string) -> bool:
 async def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
 
     # Set up a static enpoint to serve files
-    resources = hass.config.path('custom_components/bwalarm/resources')
-    hass.http.register_static_path("/bwalarm", resources)
+    hass.http.register_view(BwResources(str(hass.config.path())))
 
     # Register the panel
     url = "/api/panel_custom/alarm"
+    resources = hass.config.path('custom_components/bwalarm/resources')
     hass.http.register_static_path(url, "{}/panel.html".format(resources))
     await hass.components.panel_custom.async_register_panel(
         webcomponent_name='alarm',
@@ -1377,3 +1379,24 @@ class BWAlarm(alarm.AlarmControlPanel):
 
             return self._mqtt.async_subscribe(
                 self._hass, self._command_topic, message_received, self._qos)
+
+class BwResources(HomeAssistantView):
+    """Serve up bwalarm resources."""
+    requires_auth = False
+    url = r"/bwalarm/{path:.+}"
+    name = "bwalarm:path"
+
+    def __init__(self, hadir):
+        """Initialize."""
+        self.hadir = hadir
+
+    async def get(self, request, path):
+        """Retrieve file."""
+        custom_path = "{}/bwalarm/{}".format(self.hadir, path)
+        default_path = "{}/custom_components/bwalarm/resources/{}".format(self.hadir, path)
+        if os.path.exists(custom_path):
+            return web.FileResponse(custom_path)
+        elif os.path.exists(default_path):
+            return web.FileResponse(default_path)
+        else:
+            return None

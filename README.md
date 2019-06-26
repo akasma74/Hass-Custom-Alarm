@@ -46,3 +46,17 @@ However, you need to keep in ming that the component's code is loaded on Home As
 Therefore, evety time you update no matter how, you HAVE to clear chache of ALL of your browsers and then restart Home Assistant. 
 
 Please test and provide feedback/suggestions.
+
+
+## Custom resources.
+
+You can override any resource under the /resource directory, to do that create a directory called `bwalarm` in the root of your configuration directory.
+
+**Example:**
+
+```
+<config_dir>/bwalarm/images/ha.png
+will override:
+<config_dir>/custom_components/bwalarm/images/ha.png
+and it will stay there during updates.
+```
