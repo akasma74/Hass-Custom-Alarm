@@ -57,6 +57,8 @@ Using [HACS](https://github.com/custom-components/hacs):
 
 **Bear in mind that if you use this method, it only updates ```custom_components/bwalarm/``` folder and ALL user data inside that folder will be lost upon every update!**
 
+Updating by using HACS (even if you intitially installed bwalarm manually) does not overwrite user settings as these are stored in the resources folder. 
+
 ## After update (for all methods)
 
 Please note that the component's code is loaded on Home Assistant startup and the panels' code (```panel.html```) is cached by browser.  
