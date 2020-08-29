@@ -638,6 +638,14 @@
                         <span class='info-detail'>Enables the 'Lobster' serif font on the title, time and weather within this panel.<br>Default: Disabled</span>
                       </div>
 
+                      <div class='setting-outer vertical layout'>
+                        <div class='setting-inner horizontal layout'>
+                          <span class='info-header'>Warning Beep: </span>
+                          <ha-switch class='setting-toggle' checked='{{isChecked(alarm.attributes.panel.enable_warning_beep)}}' on-change='settingsSave' data-setting='panel' data-attribute='enable_warning_beep'></ha-switch>
+                        </div>
+                        <span class='info-detail'>Enables an audible beep when arming / warning is counting down.<br>Default: Disabled</span>
+                      </div>
+
                       <div>
                         <h1>Themes</h1>
                         <div class='info-detail'>Themes allow you to override the default Home Assistant colors.</div>
@@ -1467,6 +1475,8 @@
 
             camera_update_interval: { type: Number, value: 5000 }, // ms
 
+            countdownTimerId: { type: Number },
+
             settingColors:        { type: Array, value: [] },
             selectedUser:         { type: Object, value: null},
 
@@ -2242,6 +2252,8 @@
 
           this.callclearcode(null);
 
+          clearInterval(this.countdownTimerId);
+
           var themeName = null;
 
           this.opensensors(this.alarm, this.allsensors);
@@ -2269,11 +2281,15 @@
             this.updateStyles({'--countdown-timer-display': 'initial'});
             this.updateStyles({'--time-display': 'none'});
             this.loadUITimer(false, this.alarm.attributes.states[this.alarm.attributes.arm_state].pending_time);
+            if (this.isChecked(this.alarm.attributes.panel.enable_warning_beep))
+              this.countdownTimerId = setInterval(() => this.playSound(), 1000);
 
           } else if (this.isWarning(this.alarm)){
             this.updateStyles({'--countdown-timer-display': 'initial'});
             this.updateStyles({'--time-display': 'none'});
             this.loadUITimer(false, this.alarm.attributes.states[this.alarm.attributes.arm_state].warning_time);
+            if (this.isChecked(this.alarm.attributes.panel.enable_warning_beep))
+              this.countdownTimerId = setInterval(() => this.playSound(), 1000);
           }
 
           if (this.alarm.attributes.panel_locked == true){
@@ -2503,6 +2519,11 @@
                   this.time = String( parseInt( String(this.time).split(':')[0] ) - 12 ) + ":" + String(this.time).split(':')[1];
             }
           }
+        }
+
+        playSound() {
+          var audio = new Audio('/bwalarm/audio/beep.wav');
+          audio.play();
         }
 
         // Is the alarm disarmed?
