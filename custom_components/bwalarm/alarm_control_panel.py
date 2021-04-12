@@ -768,6 +768,11 @@ class BWAlarm(AlarmControlPanelEntity):
 
             'py_version':               sys.version_info,
         }
+  
+        if (self._state == STATE_ALARM_PENDING):
+           results['state_duration'] = self._states[self._armstate][CONF_PENDING_TIME]
+        elif (self._state == STATE_ALARM_WARNING):
+           results['state_duration'] = self._states[self._armstate][CONF_WARNING_TIME]
 
         if (CONF_USERS in self._config):
             results[CONF_USERS] = copy.deepcopy(self._config[CONF_USERS])
